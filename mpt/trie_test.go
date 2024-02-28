@@ -2,25 +2,20 @@ package mpt
 
 import (
 	"fmt"
-	"log"
 	"testing"
 
-	"github.com/lankaiyun/kaiyunchain/rlp"
 	"github.com/stretchr/testify/require"
 )
 
 func ExampleSerialize() {
+	// enc
 	key := []byte{0xa7, 0x11, 0x35, 0x51}
 	value := []byte("45")
 	trie := NewTrie()
 	_ = trie.Put(key, value)
-	i := Serialize(trie.Root)
-	var e []interface{}
-	err := rlp.DecodeBytes(i, &e)
-	if err != nil {
-		log.Panic("Failed to DecodeBytes:", err)
-	}
-	trie2 := NewTrieWithDecodeData(e)
+	bs := Serialize(trie.Root)
+	// dec
+	trie2 := Deserialize(bs)
 	v, _ := trie2.Get(key)
 	fmt.Println(v)
 	// Output:

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	kayoCommon "github.com/lankaiyun/kaiyunchain/app/kayo/internal/common"
+	localCommon "github.com/lankaiyun/kaiyunchain/app/kayo/internal/common"
 	"github.com/lankaiyun/kaiyunchain/common"
 	"github.com/lankaiyun/kaiyunchain/core"
 	"github.com/lankaiyun/kaiyunchain/db"
@@ -32,7 +32,7 @@ the blockchain, please do not modify.`,
 			// Mpt initialization
 			trie := mpt.NewTrie()
 			_ = trie.Put([]byte("hello"), []byte("world"))
-			db.Set([]byte("latest"), mpt.Serialize(trie.Root), mptDbObj)
+			db.Set(common.Latest, mpt.Serialize(trie.Root), mptDbObj)
 			// Prompt
 			time := strings.Split(common.GetCurrentTime(), " ")
 			color.Green("INFO [%s|%s] Initialization is successful!", time[0], time[1])
@@ -46,7 +46,7 @@ the blockchain, please do not modify.`,
 }
 
 func initDir() bool {
-	if kayoCommon.IsInitDir() {
+	if localCommon.IsInitDir() {
 		// 已经初始化
 		return false
 	} else {

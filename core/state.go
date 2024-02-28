@@ -3,7 +3,6 @@ package core
 import (
 	"bytes"
 	"encoding/gob"
-	"log"
 	"math/big"
 
 	"github.com/lankaiyun/kaiyunchain/common"
@@ -17,25 +16,12 @@ type State struct {
 }
 
 func NewState() *State {
-	return &State{Balance: big.NewInt(0)}
+	return &State{Balance: common.Big0}
 }
 
-func (s *State) Serialize() []byte {
-	var buf bytes.Buffer
-	encoder := gob.NewEncoder(&buf)
-	err := encoder.Encode(s)
-	if err != nil {
-		log.Panic("Failed to Encode:", err)
-	}
-	return buf.Bytes()
-}
-
-func DeserializeState(b []byte) *State {
+func DeserializeState(bs []byte) *State {
 	var state State
-	decoder := gob.NewDecoder(bytes.NewReader(b))
-	err := decoder.Decode(&state)
-	if err != nil {
-		log.Panic("Failed to Decode:", err)
-	}
+	decoder := gob.NewDecoder(bytes.NewReader(bs))
+	_ = decoder.Decode(&state)
 	return &state
 }

@@ -3,7 +3,7 @@ module github.com/lankaiyun/kaiyunchain
 go 1.22.0
 
 require (
-	github.com/cockroachdb/pebble v1.1.0
+	github.com/cockroachdb/pebble v1.0.0
 	github.com/fatih/color v1.16.0
 	github.com/holiman/uint256 v1.2.4
 	github.com/manifoldco/promptui v0.9.0
@@ -23,7 +23,6 @@ require (
 	github.com/cockroachdb/errors v1.11.1 // indirect
 	github.com/cockroachdb/logtags v0.0.0-20230118201751-21c54148d20b // indirect
 	github.com/cockroachdb/redact v1.1.5 // indirect
-	github.com/cockroachdb/tokenbucket v0.0.0-20230807174530-cc333fc44b06 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/getsentry/sentry-go v0.18.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect

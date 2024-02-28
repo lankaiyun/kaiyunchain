@@ -1,11 +1,8 @@
 package pow
 
 import (
-	"bytes"
 	"crypto/sha256"
-	"encoding/binary"
 	"github.com/lankaiyun/kaiyunchain/common"
-	"log"
 	"math/big"
 	"time"
 )
@@ -26,27 +23,10 @@ func Pow(diff *big.Int, data []byte) (*big.Int, *big.Int) {
 	return nonce, diff
 }
 
-func Mine(diff, nonce *big.Int, data []byte) bool {
-	t := append(data, nonce.Bytes()...)
-	res := common.Bytes2BigInt(sha256.Sum256(t))
-	temp := new(big.Int).Exp(common.Big2, common.Big256, nil) // 2**256
-	target := new(big.Int).Div(temp, diff)
-	return target.Cmp(res) > 0
-}
-
-func CombinedData(bss ...[]byte) []byte {
-	data := bytes.Join(
-		bss,
-		[]byte{},
-	)
-	return data
-}
-
-func ToBytes(i interface{}) []byte {
-	buf := new(bytes.Buffer)
-	err := binary.Write(buf, binary.BigEndian, i)
-	if err != nil {
-		log.Panic("Failed to Write:", err)
-	}
-	return buf.Bytes()
+func Mine(difficulty, nonce *big.Int, data []byte) bool {
+	temp := append(data, nonce.Bytes()...)
+	rand := common.Bytes2BigInt(sha256.Sum256(temp))
+	cons := new(big.Int).Exp(common.Big2, common.Big256, nil) // 2**256
+	target := new(big.Int).Div(cons, difficulty)
+	return target.Cmp(rand) > 0
 }

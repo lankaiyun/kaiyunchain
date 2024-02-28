@@ -2,6 +2,8 @@ package mpt
 
 import (
 	"errors"
+	"github.com/lankaiyun/kaiyunchain/rlp"
+	"log"
 )
 
 type Trie struct {
@@ -249,4 +251,13 @@ func (t *Trie) Put(key, value []byte) error {
 			continue
 		}
 	}
+}
+
+func Deserialize(bs []byte) *Trie {
+	var i []interface{}
+	err := rlp.DecodeBytes(bs, &i)
+	if err != nil {
+		log.Panic("Failed to DecodeBytes:", err)
+	}
+	return NewTrieWithDecodeData(i)
 }

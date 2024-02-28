@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
+
+	"github.com/lankaiyun/kaiyunchain/crypto/keccak256"
 )
 
 type MerkleTree struct {
@@ -16,14 +18,14 @@ type MerkleNode struct {
 	Hash  []byte
 }
 
-func NewMerkleNode(left, right *MerkleNode, tx *Transaction) *MerkleNode {
+func NewMerkleNode(left, right *MerkleNode, tx *Tx) *MerkleNode {
 	node := new(MerkleNode)
 	// If left and right both equal nil, then indicates that the current node is a leaf node.
 	if left == nil && right == nil {
-		node.Hash = tx.Hash()
+		node.Hash = keccak256.Keccak256(Serialize(tx))
 	} else {
-		combiendHash := append(left.Hash, right.Hash...)
-		hash := sha256.Sum256(combiendHash)
+		combineHash := append(left.Hash, right.Hash...)
+		hash := sha256.Sum256(combineHash)
 		node.Hash = hash[:]
 	}
 	node.Right = right
@@ -31,7 +33,7 @@ func NewMerkleNode(left, right *MerkleNode, tx *Transaction) *MerkleNode {
 	return node
 }
 
-func NewMerkleTree(txs []*Transaction) *MerkleTree {
+func NewMerkleTree(txs []*Tx) *MerkleTree {
 	var nodes []*MerkleNode
 	// Ensure that the number of nodes is an integer multiple of 2.
 	if len(txs)%2 != 0 {

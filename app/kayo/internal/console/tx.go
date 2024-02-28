@@ -2,41 +2,38 @@ package console
 
 import (
 	"fmt"
+	"math/big"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/cockroachdb/pebble"
 	"github.com/fatih/color"
-	kayoCommon "github.com/lankaiyun/kaiyunchain/app/kayo/internal/common"
+	localCommon "github.com/lankaiyun/kaiyunchain/app/kayo/internal/common"
 	"github.com/lankaiyun/kaiyunchain/common"
 	"github.com/lankaiyun/kaiyunchain/core"
 	"github.com/lankaiyun/kaiyunchain/crypto/ecdsa"
 	"github.com/lankaiyun/kaiyunchain/db"
 	"github.com/lankaiyun/kaiyunchain/mpt"
-	"github.com/lankaiyun/kaiyunchain/rlp"
 	"github.com/lankaiyun/kaiyunchain/wallet"
 	"github.com/peterh/liner"
-	"log"
-	"math/big"
-	"strconv"
-	"strings"
-	"time"
 )
 
-func Transaction(acc string, txDB, mptDB *pebble.DB, w *wallet.Wallet, line *liner.State) {
-	ok, loc := core.TxIsFull(txDB)
+func Transaction(account string, txDbObj, mptDbObj *pebble.DB, w *wallet.Wallet, line *liner.State) {
+	// Look tx number
+	ok, loc := core.TxIsFull(txDbObj)
 	if ok {
 		color.Yellow("The current txpool is full!")
 		fmt.Println()
 		return
 	}
-	color.Blue("Welcome to Transaction Mode!")
+	// Prompt
+	color.Blue("Welcome to Tx Mode!")
 	fmt.Println("To exit, press ctrl-d or input quit")
-	mptBytes := db.Get([]byte("latest"), mptDB)
-	var e []interface{}
-	err := rlp.DecodeBytes(mptBytes, &e)
-	if err != nil {
-		log.Panic("Failed to DecodeBytes:", err)
-	}
-	trie := mpt.NewTrieWithDecodeData(e)
-	accByte := common.Hex2Bytes(acc[2:])
+	// Get mpt
+	mptBytes := db.Get(common.Latest, mptDbObj)
+	trie := mpt.Deserialize(mptBytes)
+	accByte := common.Hex2Bytes(account[2:])
 	stateByte, _ := trie.Get(accByte)
 	state := core.DeserializeState(stateByte)
 	balance := state.Balance
@@ -56,7 +53,7 @@ func Transaction(acc string, txDB, mptDB *pebble.DB, w *wallet.Wallet, line *lin
 				fmt.Println()
 				continue
 			}
-			if strings.Compare(acc, to) == 0 {
+			if strings.Compare(account, to) == 0 {
 				color.Red("Do not transfer to yourself!")
 				fmt.Println()
 				continue
@@ -75,7 +72,7 @@ func Transaction(acc string, txDB, mptDB *pebble.DB, w *wallet.Wallet, line *lin
 						finish = true
 						break
 					}
-					if !(kayoCommon.IsPositiveInteger(input)) {
+					if !(localCommon.IsPositiveInteger(input)) {
 						color.Red("The amount you entered is illegal!")
 						fmt.Println()
 						continue
@@ -89,22 +86,17 @@ func Transaction(acc string, txDB, mptDB *pebble.DB, w *wallet.Wallet, line *lin
 					}
 					state.Balance = balance.Sub(balance, bigAmount)
 					state.Nonce += 1
-					trie.Update(accByte, state.Serialize())
+					trie.Update(accByte, core.Serialize(state))
 					state2Bytes, _ := trie.Get(toB)
 					state2 := core.DeserializeState(state2Bytes)
 					state2.Balance = state2.Balance.Add(state2.Balance, bigAmount)
-					trie.Update(toB, state2.Serialize())
-					db.Set([]byte("latest"), mpt.Serialize(trie.Root), mptDB)
-					tx := core.NewTransaction(bigAmount, uint64(time.Now().Unix()),
-						common.BytesToAddress(accByte), common.BytesToAddress(toB), ecdsa.EncodePubKey(w.PubKey))
-					txHash := tx.Hash()
-					tx.TxHash.SetBytes(txHash)
-					sign := w.Sign(txHash)
-					tx.Signature = sign
-					core.PushTxToPool(loc, tx, txDB)
+					trie.Update(toB, core.Serialize(state2))
+					db.Set(common.Latest, mpt.Serialize(trie.Root), mptDbObj)
+					// Build tx
+					core.NewTx(common.BytesToAddress(accByte), common.BytesToAddress(toB), bigAmount, time.Now().Unix(), ecdsa.EncodePubKey(w.PubKey), loc, w, txDbObj)
+					// Prompt
 					times := strings.Split(common.GetCurrentTime(), " ")
 					color.Green("INFO [%s|%s] Successful transaction!", times[0], times[1])
-					fmt.Println("TransactionHash: ", common.Bytes2Hex(tx.Hash()))
 					fmt.Println()
 					finish = true
 					break

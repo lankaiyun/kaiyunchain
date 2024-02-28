@@ -16,7 +16,7 @@ import (
 func TxPool(txDB *pebble.DB, line *liner.State) {
 	_, loc := core.TxIsFull(txDB)
 	if loc[0] == 0 {
-		color.Yellow("There is no transaction in the Txpool.")
+		color.Yellow("There is no tx in the Txpool.")
 		fmt.Println()
 		return
 	}
@@ -41,7 +41,7 @@ func TxPool(txDB *pebble.DB, line *liner.State) {
 			}
 			txBytes := db.Get([]byte{byte(i)}, txDB)
 			tx := core.DeserializeTx(txBytes)
-			fmt.Printf("TxHash: %x\n", tx.Hash())
+			fmt.Printf("TxHash: %x\n", tx.TxHash)
 			fmt.Printf("From: %s\n", tx.From.Hex())
 			fmt.Printf("To: %s\n", tx.To.Hex())
 			fmt.Println("Value: ", tx.Value, "kyc")

@@ -7,20 +7,13 @@ import (
 	"github.com/lankaiyun/kaiyunchain/core"
 	"github.com/lankaiyun/kaiyunchain/db"
 	"github.com/lankaiyun/kaiyunchain/mpt"
-	"github.com/lankaiyun/kaiyunchain/rlp"
-	"log"
 )
 
-func ShowBalance(acc string, dbObj *pebble.DB) {
-	mptBytes := db.Get([]byte("latest"), dbObj)
-	var e []interface{}
-	err := rlp.DecodeBytes(mptBytes, &e)
-	if err != nil {
-		log.Panic("Failed to DecodeBytes:", err)
-	}
-	trie := mpt.NewTrieWithDecodeData(e)
-	stateB, _ := trie.Get(common.Hex2Bytes(acc[2:]))
-	state := core.DeserializeState(stateB)
+func ShowBalance(account string, dbObj *pebble.DB) {
+	mptBytes := db.Get(common.Latest, dbObj)
+	trie := mpt.Deserialize(mptBytes)
+	stateBytes, _ := trie.Get(common.Hex2Bytes(account[2:]))
+	state := core.DeserializeState(stateBytes)
 	fmt.Println(state.Balance.String(), "kyc")
 	fmt.Println()
 }
