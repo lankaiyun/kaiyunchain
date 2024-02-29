@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-func Mine(acc string, txDbObj, chainDbObj, mptDbObj *pebble.DB) {
+func Mine(account string, txDbObj, chainDbObj, mptDbObj *pebble.DB) {
 	var txs []*core.Tx
 	_, loc := core.TxIsFull(txDbObj)
 	for i := 0; i < int(loc[0]); i++ {
@@ -29,22 +29,22 @@ func Mine(acc string, txDbObj, chainDbObj, mptDbObj *pebble.DB) {
 		txs = append(txs, tx)
 		db.Set([]byte{byte(i)}, core.Serialize(tx), txDbObj)
 	}
-	accBytes := common.Hex2Bytes(acc[2:])
+	accBytes := common.Hex2Bytes(account[2:])
 	// Update state tree
 	mptBytes := db.Get(common.Latest, mptDbObj)
 	trie := mpt.Deserialize(mptBytes)
 	stateBytes, _ := trie.Get(accBytes)
 	state := core.DeserializeState(stateBytes)
-	i, _ := new(big.Int).SetString("100", 10)
-	state.Balance = state.Balance.Add(state.Balance, i)
+	reward, _ := new(big.Int).SetString("100", 10)
+	state.Balance = state.Balance.Add(state.Balance, reward)
 	trie.Update(accBytes, core.Serialize(state))
 	db.Set(common.Latest, mpt.Serialize(trie.Root), mptDbObj)
 	// Create block
-	core.NewBlockByMine(i, common.BytesToAddress(accBytes), txs, chainDbObj, mptDbObj)
+	core.NewBlockAllin(reward, common.BytesToAddress(accBytes), txs, chainDbObj, mptDbObj, txDbObj)
 	// Prompt
 	times := strings.Split(common.GetCurrentTime(), " ")
 	fmt.Println()
 	color.Green("INFO [%s|%s] A block was successfully mined!", times[0], times[1])
-	fmt.Println("Account", acc, "will be awarded 100 kyc.")
+	fmt.Println("Account", account, "will be awarded 100 kyc.")
 	fmt.Println()
 }

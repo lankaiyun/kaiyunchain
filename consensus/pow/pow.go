@@ -2,25 +2,27 @@ package pow
 
 import (
 	"crypto/sha256"
+	"fmt"
 	"github.com/lankaiyun/kaiyunchain/common"
 	"math/big"
 	"time"
 )
 
-func Pow(diff *big.Int, data []byte) (*big.Int, *big.Int) {
+func Pow(difficulty *big.Int, data []byte) (*big.Int, *big.Int) {
+	fmt.Println("Mining is underway now, please wait patiently.")
 	nonce := new(big.Int)
 	begin := time.Now().UnixNano()
-	for !Mine(diff, nonce, data) {
+	for !Mine(difficulty, nonce, data) {
 		nonce.Add(nonce, common.Big1)
 	}
 	end := time.Now().UnixNano()
 	consumedTime := (end - begin) / 1e6
 	if consumedTime < 60000 {
-		diff.Add(diff, big.NewInt(16384))
+		difficulty.Add(difficulty, big.NewInt(16384))
 	} else {
-		diff.Sub(diff, big.NewInt(16384))
+		difficulty.Sub(difficulty, big.NewInt(16384))
 	}
-	return nonce, diff
+	return nonce, difficulty
 }
 
 func Mine(difficulty, nonce *big.Int, data []byte) bool {

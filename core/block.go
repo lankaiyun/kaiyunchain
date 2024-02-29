@@ -3,7 +3,6 @@ package core
 import (
 	"bytes"
 	"encoding/gob"
-	"fmt"
 	"math/big"
 
 	"github.com/cockroachdb/pebble"
@@ -37,10 +36,11 @@ type BlockBody struct {
 	Txs []*Tx
 }
 
-func NewGenesisBlock(dbObj *pebble.DB) {
+func NewGenesisBlock(chainDbObj, txDbObj *pebble.DB) {
+	height := common.Big0
 	block := &Block{
 		&BlockHeader{
-			Height:     common.Big0,
+			Height:     height,
 			Time:       common.GetCurrentTimestamp(),
 			Difficulty: common.BigInitDifficulty,
 			Nonce:      common.Big0,
@@ -48,24 +48,28 @@ func NewGenesisBlock(dbObj *pebble.DB) {
 		},
 		&BlockBody{},
 	}
+	// Set hash
 	blockHash := keccak256.Keccak256(Serialize(block))
 	block.Header.BlockHash.SetBytes(blockHash)
-	db.Set(blockHash, Serialize(block), dbObj)
-	db.Set(common.Latest, blockHash, dbObj)
-	db.Set(common.Difficulty, common.InitDifficulty, dbObj)
+	// Store
+	db.Set(height.Bytes(), Serialize(block), chainDbObj)
+	db.Set(common.Latest, height.Bytes(), chainDbObj)
+	db.Set(common.Difficulty, common.BigInitDifficulty.Bytes(), chainDbObj)
+	db.Set(common.TxNum, common.Big0.Bytes(), txDbObj)
 }
 
-func NewBlockByMine(reward *big.Int, coinbase common.Address, txs []*Tx, chainDbObj, mptDbObj *pebble.DB) {
+func NewBlockAllin(reward *big.Int, coinbase common.Address, txs []*Tx, chainDbObj, mptDbObj, txDbObj *pebble.DB) {
 	// Get last block
 	lastBlock := GetLastBlock(chainDbObj)
 	// Create new Block
 	height := new(big.Int).Add(lastBlock.Header.Height, common.Big1)
 	block := &Block{
 		&BlockHeader{
-			Height:   height,
-			Time:     common.GetCurrentTimestamp(),
-			Coinbase: coinbase,
-			Reward:   reward,
+			Height:        height,
+			Time:          common.GetCurrentTimestamp(),
+			Coinbase:      coinbase,
+			Reward:        reward,
+			PrevBlockHash: lastBlock.Header.BlockHash,
 		},
 		&BlockBody{
 			Txs: txs,
@@ -79,56 +83,35 @@ func NewBlockByMine(reward *big.Int, coinbase common.Address, txs []*Tx, chainDb
 	if len(txs) != 0 {
 		merkleTree := NewMerkleTree(txs)
 		block.Header.MerkleTreeRoot.SetBytes(merkleTree.RootNode.Hash)
+		txNumBytes := db.Get(common.TxNum, txDbObj)
+		db.Set(common.TxNum, new(big.Int).Add(new(big.Int).SetBytes(txNumBytes), big.NewInt(int64(len(txs)))).Bytes(), txDbObj)
 	}
-	block.Header.PrevBlockHash.SetBytes(lastBlock.Header.BlockHash.Bytes())
-	fmt.Println("Mining is underway now, please wait patiently.")
+	// Mine
 	nonce, difficulty := pow.Pow(lastBlock.Header.Difficulty, Serialize(block))
 	block.Header.Difficulty = difficulty
 	block.Header.Nonce = nonce
-	// End
+	// Set hash
 	blockHash := keccak256.Keccak256(Serialize(block))
 	block.Header.BlockHash.SetBytes(blockHash)
-	db.Set(blockHash, Serialize(block), chainDbObj)
-	db.Set(common.Latest, blockHash, chainDbObj)
+	// Store
+	db.Set(height.Bytes(), Serialize(block), chainDbObj)
+	db.Set(common.Latest, height.Bytes(), chainDbObj)
 	db.Set(common.Difficulty, difficulty.Bytes(), chainDbObj)
 }
 
-func GetLastBlock(dbObj *pebble.DB) *Block {
-	lastBlockHash := db.Get(common.Latest, dbObj)
-	lastBlockBytes := db.Get(lastBlockHash, dbObj)
+func GetLastBlock(chainDbObj *pebble.DB) *Block {
+	lastBlockHeight := db.Get(common.Latest, chainDbObj)
+	lastBlockBytes := db.Get(lastBlockHeight, chainDbObj)
 	return DeserializeBlock(lastBlockBytes)
 }
 
+func GetBlock(height *big.Int, chainDbObj *pebble.DB) *Block {
+	blockBytes := db.Get(height.Bytes(), chainDbObj)
+	return DeserializeBlock(blockBytes)
+}
+
 func NewBlockByNoMine(reward, nonce, diff, prevNum *big.Int, prevHash []byte, coinbase common.Address, chainDbObj, mptDBObj *pebble.DB, txs []*Tx) {
-	// Create new Block
-	number := new(big.Int).Add(prevNum, common.Big1)
-	block := &Block{
-		&BlockHeader{
-			Height:   number,
-			Time:     common.GetCurrentTimestamp(),
-			Coinbase: coinbase,
-			Reward:   reward,
-		},
-		&BlockBody{
-			Txs: txs,
-		},
-	}
-	// Store current mpt
-	mptBytes := db.Get(common.Latest, mptDBObj)
-	db.Set(number.Bytes(), mptBytes, mptDBObj)
-	block.Header.StateTreeRoot.SetBytes(keccak256.Keccak256(mptBytes))
-	// Building MerkleTree
-	merkleTree := NewMerkleTree(txs)
-	block.Header.MerkleTreeRoot.SetBytes(merkleTree.RootNode.Hash)
 
-	block.Header.PrevBlockHash.SetBytes(prevHash)
-	block.Header.Difficulty = diff
-	block.Header.Nonce = nonce
-
-	blockHash := keccak256.Keccak256(Serialize(block))
-	block.Header.BlockHash.SetBytes(blockHash)
-	db.Set(blockHash, Serialize(block), chainDbObj)
-	db.Set(common.Latest, blockHash, chainDbObj)
 }
 
 func DeserializeBlock(bs []byte) *Block {

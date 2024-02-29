@@ -73,27 +73,27 @@ func Transaction(account string, txDbObj, mptDbObj *pebble.DB, w *wallet.Wallet,
 						break
 					}
 					if !(localCommon.IsPositiveInteger(input)) {
-						color.Red("The amount you entered is illegal!")
+						color.Red("illegal!")
 						fmt.Println()
 						continue
 					}
-					amount, _ := strconv.ParseInt(input, 10, 64)
-					bigAmount := big.NewInt(amount)
-					if balance.Cmp(bigAmount) == -1 {
+					value, _ := strconv.Atoi(input)
+					valueBig := big.NewInt(int64(value))
+					if balance.Cmp(valueBig) == -1 {
 						color.Red("Your balance is insufficient!")
 						fmt.Println()
 						continue
 					}
-					state.Balance = balance.Sub(balance, bigAmount)
+					state.Balance = balance.Sub(balance, valueBig)
 					state.Nonce += 1
 					trie.Update(accByte, core.Serialize(state))
 					state2Bytes, _ := trie.Get(toB)
 					state2 := core.DeserializeState(state2Bytes)
-					state2.Balance = state2.Balance.Add(state2.Balance, bigAmount)
+					state2.Balance = state2.Balance.Add(state2.Balance, valueBig)
 					trie.Update(toB, core.Serialize(state2))
 					db.Set(common.Latest, mpt.Serialize(trie.Root), mptDbObj)
 					// Build tx
-					core.NewTx(common.BytesToAddress(accByte), common.BytesToAddress(toB), bigAmount, time.Now().Unix(), ecdsa.EncodePubKey(w.PubKey), loc, w, txDbObj)
+					core.NewTx(common.BytesToAddress(accByte), common.BytesToAddress(toB), valueBig, time.Now().Unix(), ecdsa.EncodePubKey(w.PubKey), loc, w, txDbObj)
 					// Prompt
 					times := strings.Split(common.GetCurrentTime(), " ")
 					color.Green("INFO [%s|%s] Successful transaction!", times[0], times[1])

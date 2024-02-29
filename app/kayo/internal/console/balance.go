@@ -14,6 +14,7 @@ func ShowBalance(account string, dbObj *pebble.DB) {
 	trie := mpt.Deserialize(mptBytes)
 	stateBytes, _ := trie.Get(common.Hex2Bytes(account[2:]))
 	state := core.DeserializeState(stateBytes)
+	// Prompt
 	fmt.Println(state.Balance.String(), "kyc")
 	fmt.Println()
 }

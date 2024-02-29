@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 
 const (
 	Rpc_GetAllBlock_FullMethodName = "/Rpc/GetAllBlock"
+	Rpc_GetAllTx_FullMethodName    = "/Rpc/GetAllTx"
 )
 
 // RpcClient is the client API for Rpc service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RpcClient interface {
 	GetAllBlock(ctx context.Context, in *GetAllBlockReq, opts ...grpc.CallOption) (*GetAllBlockResp, error)
+	GetAllTx(ctx context.Context, in *GetAllTxReq, opts ...grpc.CallOption) (*GetAllTxResp, error)
 }
 
 type rpcClient struct {
@@ -46,11 +48,21 @@ func (c *rpcClient) GetAllBlock(ctx context.Context, in *GetAllBlockReq, opts ..
 	return out, nil
 }
 
+func (c *rpcClient) GetAllTx(ctx context.Context, in *GetAllTxReq, opts ...grpc.CallOption) (*GetAllTxResp, error) {
+	out := new(GetAllTxResp)
+	err := c.cc.Invoke(ctx, Rpc_GetAllTx_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RpcServer is the server API for Rpc service.
 // All implementations must embed UnimplementedRpcServer
 // for forward compatibility
 type RpcServer interface {
 	GetAllBlock(context.Context, *GetAllBlockReq) (*GetAllBlockResp, error)
+	GetAllTx(context.Context, *GetAllTxReq) (*GetAllTxResp, error)
 	mustEmbedUnimplementedRpcServer()
 }
 
@@ -60,6 +72,9 @@ type UnimplementedRpcServer struct {
 
 func (UnimplementedRpcServer) GetAllBlock(context.Context, *GetAllBlockReq) (*GetAllBlockResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAllBlock not implemented")
+}
+func (UnimplementedRpcServer) GetAllTx(context.Context, *GetAllTxReq) (*GetAllTxResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAllTx not implemented")
 }
 func (UnimplementedRpcServer) mustEmbedUnimplementedRpcServer() {}
 
@@ -92,6 +107,24 @@ func _Rpc_GetAllBlock_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Rpc_GetAllTx_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAllTxReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RpcServer).GetAllTx(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Rpc_GetAllTx_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RpcServer).GetAllTx(ctx, req.(*GetAllTxReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Rpc_ServiceDesc is the grpc.ServiceDesc for Rpc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -102,6 +135,10 @@ var Rpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAllBlock",
 			Handler:    _Rpc_GetAllBlock_Handler,
+		},
+		{
+			MethodName: "GetAllTx",
+			Handler:    _Rpc_GetAllTx_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

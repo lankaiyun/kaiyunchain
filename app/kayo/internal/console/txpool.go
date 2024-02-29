@@ -46,7 +46,7 @@ func TxPool(txDB *pebble.DB, line *liner.State) {
 			fmt.Printf("To: %s\n", tx.To.Hex())
 			fmt.Println("Value: ", tx.Value, "kyc")
 			fmt.Println("State: pending")
-			fmt.Println("Time: ", common.TimestampToTime(int64(tx.Time)))
+			fmt.Println("Time: ", common.TimestampToTime(tx.Time))
 			fmt.Println()
 		}
 	}
