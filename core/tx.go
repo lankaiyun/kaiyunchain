@@ -61,3 +61,8 @@ func DeserializeTx(bs []byte) *Tx {
 	_ = decoder.Decode(&tx)
 	return &tx
 }
+
+func GetTxNum(txDbObj *pebble.DB) *big.Int {
+	txNumBytes := db.Get(common.TxNum, txDbObj)
+	return new(big.Int).SetBytes(txNumBytes)
+}

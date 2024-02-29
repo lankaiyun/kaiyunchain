@@ -44,7 +44,7 @@ func Interface(acc string, w *wallet.Wallet) {
 	chainDbObj := db.GetDbObj(db.ChainDataPath)
 	defer db.CloseDbObj(chainDbObj)
 	for {
-		i := MainPrompt(acc)
+		i := MainPrompt(acc, txDbObj, chainDbObj)
 		if i == 0 || i == -1 {
 			color.Blue("bye")
 			fmt.Println()

@@ -49,7 +49,7 @@ func (s *Server) GetAllTx(ctx context.Context, req *pb.GetAllTxReq) (*pb.GetAllT
 		for j := len(block.Body.Txs) - 1; j >= 0; j-- {
 			if count >= begin && count < end {
 				txs = append(txs, &pb.GetAllTxResp_Tx{
-					TxHash:      block.Body.Txs[j].TxHash.Hex()[2:],
+					TxHash:      block.Body.Txs[j].TxHash.Hex(),
 					From:        block.Body.Txs[j].From.Hex(),
 					To:          block.Body.Txs[j].To.Hex(),
 					Value:       block.Body.Txs[j].Value.String(),
