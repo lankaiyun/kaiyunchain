@@ -27,8 +27,10 @@ the blockchain, please do not modify.`,
 			defer db.CloseDbObj(chainDbObj)
 			mptDbObj := db.GetDbObj(db.MptDataPath)
 			defer db.CloseDbObj(mptDbObj)
+			txDbObj := db.GetDbObj(db.TxDataPath)
+			defer db.CloseDbObj(txDbObj)
 			// Blockchain initialization
-			core.NewGenesisBlock(chainDbObj)
+			core.NewGenesisBlock(chainDbObj, txDbObj)
 			// Mpt initialization
 			trie := mpt.NewTrie()
 			_ = trie.Put([]byte("hello"), []byte("world"))
