@@ -49,7 +49,7 @@ func (s *Server) GetAllBlock(ctx context.Context, req *pb.GetAllBlockReq) (*pb.G
 			})
 		}
 	}
-	return &pb.GetAllBlockResp{Block: bs}, nil
+	return &pb.GetAllBlockResp{Blocks: bs}, nil
 }
 
 func (s *Server) GetAllTx(ctx context.Context, req *pb.GetAllTxReq) (*pb.GetAllTxResp, error) {
