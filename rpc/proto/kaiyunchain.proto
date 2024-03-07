@@ -20,7 +20,7 @@ message GetAllBlockResp {
     string txs = 4;
     string reward = 5;
   }
-  repeated Block block = 1;
+  repeated Block blocks = 1;
 }
 // -------------------------------------
 
