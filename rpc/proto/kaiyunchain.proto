@@ -4,8 +4,11 @@ option go_package = "../pb;pb";
 
 service Rpc {
   rpc GetAllBlock(GetAllBlockReq) returns (GetAllBlockResp) {}
+  rpc GetBlock(GetBlockReq) returns (GetBlockResp) {}
   rpc GetAllTx(GetAllTxReq) returns (GetAllTxResp) {}
+  rpc GetTx(GetTxReq) returns (GetTxResp) {}
 }
+
 // ----------- GetAllBlock -------------
 message GetAllBlockReq {
   string begin = 1;
@@ -17,7 +20,7 @@ message GetAllBlockResp {
     string height = 1;
     string time = 2;
     string coinbase = 3;
-    string txs = 4;
+    string txNum = 4;
     string reward = 5;
   }
   repeated Block blocks = 1;
@@ -40,5 +43,39 @@ message GetAllTxResp {
     string belongBlock = 6;
   }
   repeated Tx txs = 1;
+}
+// -------------------------------------
+
+// ------------- GetBlock --------------
+message GetBlockReq {
+  string height = 1;
+}
+
+message GetBlockResp {
+  string nonce = 1;
+  string time = 2;
+  string txNum = 3;
+  string reward = 4;
+  string difficulty = 5;
+  string coinbase = 6;
+  string blockHash = 7;
+  string prevBlockHash = 8;
+  string stateTreeRoot = 9;
+  string merkleTreeRoot = 10;
+}
+// -------------------------------------
+
+// --------------- GetTx ---------------
+message GetTxReq {
+  string txHash = 1;
+}
+
+message GetTxResp {
+  string txHash = 1;
+  string from = 2;
+  string to = 3;
+  string value = 4;
+  string time = 5;
+  string belongBlock = 6;
 }
 // -------------------------------------
