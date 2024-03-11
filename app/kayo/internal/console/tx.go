@@ -19,7 +19,7 @@ import (
 	"github.com/peterh/liner"
 )
 
-func Transaction(account string, txDbObj, mptDbObj *pebble.DB, w *wallet.Wallet, line *liner.State) {
+func Transaction(account string, chainDbObj, txDbObj, mptDbObj *pebble.DB, w *wallet.Wallet, line *liner.State) {
 	// Look tx number
 	ok, loc := core.TxIsFull(txDbObj)
 	if ok {
@@ -92,8 +92,11 @@ func Transaction(account string, txDbObj, mptDbObj *pebble.DB, w *wallet.Wallet,
 					state2.Balance = state2.Balance.Add(state2.Balance, valueBig)
 					trie.Update(toB, core.Serialize(state2))
 					db.Set(common.Latest, mpt.Serialize(trie.Root), mptDbObj)
+					// Get belong block
+					lastBlock := core.GetLastBlock(chainDbObj)
+					height := new(big.Int).Add(lastBlock.Header.Height, common.Big1)
 					// Build tx
-					core.NewTx(common.BytesToAddress(accByte), common.BytesToAddress(toB), valueBig, time.Now().Unix(), ecdsa.EncodePubKey(w.PubKey), loc, w, txDbObj)
+					core.NewTx(common.BytesToAddress(accByte), common.BytesToAddress(toB), valueBig, height, time.Now().Unix(), ecdsa.EncodePubKey(w.PubKey), loc, w, txDbObj)
 					// Prompt
 					times := strings.Split(common.GetCurrentTime(), " ")
 					color.Green("INFO [%s|%s] Successful transaction!", times[0], times[1])

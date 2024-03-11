@@ -3,6 +3,8 @@ package core
 import (
 	"bytes"
 	"encoding/gob"
+	"encoding/hex"
+	"fmt"
 	"math/big"
 
 	"github.com/cockroachdb/pebble"
@@ -26,13 +28,14 @@ type Tx struct {
 	// 1 represent already included in the blockchain
 }
 
-func NewTx(from, to common.Address, value *big.Int, time int64, pubKey, loc []byte, w *wallet.Wallet, txDbObj *pebble.DB) {
+func NewTx(from, to common.Address, value, belongBlock *big.Int, time int64, pubKey, loc []byte, w *wallet.Wallet, txDbObj *pebble.DB) {
 	tx := &Tx{
-		From:   from,
-		To:     to,
-		Value:  value,
-		Time:   time,
-		PubKey: pubKey,
+		From:        from,
+		To:          to,
+		Value:       value,
+		Time:        time,
+		PubKey:      pubKey,
+		BelongBlock: belongBlock,
 	}
 	tx.TxHash.SetBytes(keccak256.Keccak256(Serialize(tx)))
 	tx.Signature = w.Sign(tx.TxHash.Bytes())
@@ -70,7 +73,12 @@ func GetTxNum(txDbObj *pebble.DB) *big.Int {
 }
 
 func GetTx(txHash string, txDbObj *pebble.DB) *Tx {
-	txBytes := db.Get([]byte(txHash), txDbObj)
+	txHashBytes, err := hex.DecodeString(txHash[2:])
+	if err != nil {
+		fmt.Println("解码失败:", err)
+		return nil
+	}
+	txBytes := db.Get(txHashBytes, txDbObj)
 	if txBytes == nil {
 		return nil
 	}

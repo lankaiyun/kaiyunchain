@@ -52,7 +52,7 @@ func Interface(acc string, w *wallet.Wallet) {
 		} else if i == 1 {
 			ShowBalance(acc, mptDbObj)
 		} else if i == 2 {
-			Transaction(acc, txDbObj, mptDbObj, w, line)
+			Transaction(acc, chainDbObj, txDbObj, mptDbObj, w, line)
 		} else if i == 3 {
 			TxPool(txDbObj, line)
 		} else if i == 4 {
