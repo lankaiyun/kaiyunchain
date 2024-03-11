@@ -6,13 +6,14 @@ import (
 	"github.com/fatih/color"
 	"github.com/lankaiyun/kaiyunchain/common"
 	"github.com/lankaiyun/kaiyunchain/core"
+	"github.com/lankaiyun/kaiyunchain/db"
 	"github.com/manifoldco/promptui"
 	"math/big"
 )
 
 func MainPrompt(acc string, txDbObj, chainDbObj *pebble.DB) int {
 	color.Blue("Welcome to the Kayo console!")
-	fmt.Printf("Account: %s BlockNum: %s TxNum: %s\n", acc, new(big.Int).Add(core.GetLastBlock(chainDbObj).Header.Height, common.Big1).String(), core.GetTxNum(txDbObj).String())
+	fmt.Printf("Account: %s BlockNum: %s TxNum: %s Difficulty: %s\n", acc, new(big.Int).Add(core.GetLastBlock(chainDbObj).Header.Height, common.Big1).String(), core.GetTxNum(txDbObj).String(), new(big.Int).SetBytes(db.Get(common.Difficulty, chainDbObj)).String())
 	return ScanChoose()
 }
 

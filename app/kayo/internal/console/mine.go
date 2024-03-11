@@ -15,6 +15,9 @@ import (
 )
 
 func Mine(account string, txDbObj, chainDbObj, mptDbObj *pebble.DB) {
+	// Get last block
+	lastBlock := core.GetLastBlock(chainDbObj)
+	height := new(big.Int).Add(lastBlock.Header.Height, common.Big1)
 	var txs []*core.Tx
 	_, loc := core.TxIsFull(txDbObj)
 	for i := 0; i < int(loc[0]); i++ {
@@ -26,6 +29,7 @@ func Mine(account string, txDbObj, chainDbObj, mptDbObj *pebble.DB) {
 			return
 		}
 		tx.State = 1
+		tx.BelongBlock = height
 		txs = append(txs, tx)
 		db.Set([]byte{byte(i)}, core.Serialize(tx), txDbObj)
 	}

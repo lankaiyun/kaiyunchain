@@ -13,14 +13,15 @@ import (
 )
 
 type Tx struct {
-	TxHash    common.Hash
-	From      common.Address
-	To        common.Address
-	Value     *big.Int
-	Time      int64
-	PubKey    []byte
-	Signature []byte
-	State     int
+	TxHash      common.Hash
+	From        common.Address
+	To          common.Address
+	Value       *big.Int
+	BelongBlock *big.Int
+	Time        int64
+	PubKey      []byte
+	Signature   []byte
+	State       int
 	// 0 represent not yet included in the blockchain
 	// 1 represent already included in the blockchain
 }
@@ -66,4 +67,9 @@ func DeserializeTx(bs []byte) *Tx {
 func GetTxNum(txDbObj *pebble.DB) *big.Int {
 	txNumBytes := db.Get(common.TxNum, txDbObj)
 	return new(big.Int).SetBytes(txNumBytes)
+}
+
+func GetTx(txHash string, txDbObj *pebble.DB) *Tx {
+	txBytes := db.Get([]byte(txHash), txDbObj)
+	return DeserializeTx(txBytes)
 }
