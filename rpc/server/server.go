@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"github.com/cockroachdb/pebble"
 	"github.com/lankaiyun/kaiyunchain/common"
 	"github.com/lankaiyun/kaiyunchain/core"
@@ -41,7 +42,15 @@ func (s *Server) GetAllBlock(ctx context.Context, req *pb.GetAllBlockReq) (*pb.G
 }
 
 func (s *Server) GetBlock(ctx context.Context, req *pb.GetBlockReq) (*pb.GetBlockResp, error) {
-	height, _ := strconv.Atoi(req.GetHeight())
+	lastBlock := core.GetLastBlock(s.ChainDbObj)
+	lastBlockHeight := int(lastBlock.Header.Height.Int64())
+	height, err := strconv.Atoi(req.GetHeight())
+	if err != nil {
+		return nil, err
+	}
+	if height < 0 || height > lastBlockHeight {
+		return nil, errors.New("out of block range")
+	}
 	block := core.GetBlock(big.NewInt(int64(height)), s.ChainDbObj)
 	return &pb.GetBlockResp{
 		Nonce:          block.Header.Nonce.String(),
