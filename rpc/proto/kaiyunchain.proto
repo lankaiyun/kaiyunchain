@@ -3,11 +3,22 @@ syntax = "proto3";
 option go_package = "../pb;pb";
 
 service Rpc {
+  rpc GetLatestBlockHeight(GetLatestBlockHeightReq) returns (GetLatestBlockHeightResp) {}
   rpc GetAllBlock(GetAllBlockReq) returns (GetAllBlockResp) {}
   rpc GetBlock(GetBlockReq) returns (GetBlockResp) {}
+
+  rpc GetLatestTxNum(GetLatestTxNumReq) returns (GetLatestTxNumResp) {}
   rpc GetAllTx(GetAllTxReq) returns (GetAllTxResp) {}
   rpc GetTx(GetTxReq) returns (GetTxResp) {}
 }
+
+// ------- GetLatestBlockHeight --------
+message GetLatestBlockHeightReq {}
+
+message GetLatestBlockHeightResp {
+  string height = 1;
+}
+// -------------------------------------
 
 // ----------- GetAllBlock -------------
 message GetAllBlockReq {
@@ -27,25 +38,6 @@ message GetAllBlockResp {
 }
 // -------------------------------------
 
-// ------------- GetAllTx --------------
-message GetAllTxReq {
-  string begin = 1;
-  string end = 2;
-}
-
-message GetAllTxResp {
-  message Tx {
-    string txHash = 1;
-    string from = 2;
-    string to = 3;
-    string value = 4;
-    string time = 5;
-    string belongBlock = 6;
-  }
-  repeated Tx txs = 1;
-}
-// -------------------------------------
-
 // ------------- GetBlock --------------
 message GetBlockReq {
   string height = 1;
@@ -62,6 +54,33 @@ message GetBlockResp {
   string prevBlockHash = 8;
   string stateTreeRoot = 9;
   string merkleTreeRoot = 10;
+}
+// -------------------------------------
+
+// ---------- GetLatestTxNum -----------
+message GetLatestTxNumReq {}
+
+message GetLatestTxNumResp {
+  string num = 1;
+}
+// -------------------------------------
+
+// ------------- GetAllTx --------------
+message GetAllTxReq {
+  string begin = 1;
+  string end = 2;
+}
+
+message GetAllTxResp {
+  message Tx {
+    string txHash = 1;
+    string from = 2;
+    string to = 3;
+    string value = 4;
+    string time = 5;
+    string belongBlock = 6;
+  }
+  repeated Tx txs = 1;
 }
 // -------------------------------------
 

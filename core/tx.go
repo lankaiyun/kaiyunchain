@@ -36,6 +36,7 @@ func NewTx(from, to common.Address, value *big.Int, time int64, pubKey, loc []by
 	tx.TxHash.SetBytes(keccak256.Keccak256(Serialize(tx)))
 	tx.Signature = w.Sign(tx.TxHash.Bytes())
 	db.Set(loc, Serialize(tx), txDbObj)
+	db.Set(tx.TxHash.Bytes(), Serialize(tx), txDbObj)
 }
 
 const PoolSize = 50
