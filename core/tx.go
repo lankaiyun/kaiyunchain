@@ -71,5 +71,8 @@ func GetTxNum(txDbObj *pebble.DB) *big.Int {
 
 func GetTx(txHash string, txDbObj *pebble.DB) *Tx {
 	txBytes := db.Get([]byte(txHash), txDbObj)
+	if txBytes == nil {
+		return nil
+	}
 	return DeserializeTx(txBytes)
 }

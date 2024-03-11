@@ -105,6 +105,9 @@ func (s *Server) GetAllTx(ctx context.Context, req *pb.GetAllTxReq) (*pb.GetAllT
 func (s *Server) GetTx(ctx context.Context, req *pb.GetTxReq) (*pb.GetTxResp, error) {
 	txHash := req.GetTxHash()
 	tx := core.GetTx(txHash, s.TxDbObj)
+	if tx == nil {
+		return nil, errors.New("tx get failed")
+	}
 	return &pb.GetTxResp{
 		TxHash:      tx.TxHash.Hex(),
 		From:        tx.From.Hex(),
