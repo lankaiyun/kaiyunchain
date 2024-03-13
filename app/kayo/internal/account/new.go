@@ -12,7 +12,6 @@ import (
 	"github.com/lankaiyun/kaiyunchain/core"
 	"github.com/lankaiyun/kaiyunchain/db"
 	"github.com/lankaiyun/kaiyunchain/mpt"
-	"github.com/lankaiyun/kaiyunchain/rlp"
 	"github.com/lankaiyun/kaiyunchain/wallet"
 	"github.com/manifoldco/promptui"
 )
@@ -33,14 +32,9 @@ func NewAccount() {
 	w.StoreKey(path, pass)
 	// Save sate to mpt
 	mptBytes := db.Get(common.Latest, mptDbObj)
-	var e []interface{}
-	err := rlp.DecodeBytes(mptBytes, &e)
-	if err != nil {
-		log.Panic("Failed to DecodeBytes:", err)
-	}
-	trie := mpt.NewTrieWithDecodeData(e)
+	trie := mpt.Deserialize(mptBytes)
 	state := core.NewState()
-	err = trie.Put(w.Address.Bytes(), core.Serialize(state))
+	err := trie.Put(w.Address.Bytes(), core.Serialize(state))
 	if err != nil {
 		log.Panic("Failed to Put:", err)
 	}

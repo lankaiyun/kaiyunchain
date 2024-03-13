@@ -10,6 +10,8 @@ service Rpc {
   rpc GetLatestTxNum(GetLatestTxNumReq) returns (GetLatestTxNumResp) {}
   rpc GetAllTx(GetAllTxReq) returns (GetAllTxResp) {}
   rpc GetTx(GetTxReq) returns (GetTxResp) {}
+
+  rpc NewAccount(NewAccountReq) returns (NewAccountResp) {}
 }
 
 // ------- GetLatestBlockHeight --------
@@ -96,5 +98,15 @@ message GetTxResp {
   string value = 4;
   string time = 5;
   string belongBlock = 6;
+}
+// -------------------------------------
+
+// ------------ NewAccount -------------
+message NewAccountReq {
+  string password = 1;
+}
+
+message NewAccountResp {
+  string account = 1;
 }
 // -------------------------------------

@@ -25,6 +25,7 @@ const (
 	Rpc_GetLatestTxNum_FullMethodName       = "/Rpc/GetLatestTxNum"
 	Rpc_GetAllTx_FullMethodName             = "/Rpc/GetAllTx"
 	Rpc_GetTx_FullMethodName                = "/Rpc/GetTx"
+	Rpc_NewAccount_FullMethodName           = "/Rpc/NewAccount"
 )
 
 // RpcClient is the client API for Rpc service.
@@ -37,6 +38,7 @@ type RpcClient interface {
 	GetLatestTxNum(ctx context.Context, in *GetLatestTxNumReq, opts ...grpc.CallOption) (*GetLatestTxNumResp, error)
 	GetAllTx(ctx context.Context, in *GetAllTxReq, opts ...grpc.CallOption) (*GetAllTxResp, error)
 	GetTx(ctx context.Context, in *GetTxReq, opts ...grpc.CallOption) (*GetTxResp, error)
+	NewAccount(ctx context.Context, in *NewAccountReq, opts ...grpc.CallOption) (*NewAccountResp, error)
 }
 
 type rpcClient struct {
@@ -101,6 +103,15 @@ func (c *rpcClient) GetTx(ctx context.Context, in *GetTxReq, opts ...grpc.CallOp
 	return out, nil
 }
 
+func (c *rpcClient) NewAccount(ctx context.Context, in *NewAccountReq, opts ...grpc.CallOption) (*NewAccountResp, error) {
+	out := new(NewAccountResp)
+	err := c.cc.Invoke(ctx, Rpc_NewAccount_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RpcServer is the server API for Rpc service.
 // All implementations must embed UnimplementedRpcServer
 // for forward compatibility
@@ -111,6 +122,7 @@ type RpcServer interface {
 	GetLatestTxNum(context.Context, *GetLatestTxNumReq) (*GetLatestTxNumResp, error)
 	GetAllTx(context.Context, *GetAllTxReq) (*GetAllTxResp, error)
 	GetTx(context.Context, *GetTxReq) (*GetTxResp, error)
+	NewAccount(context.Context, *NewAccountReq) (*NewAccountResp, error)
 	mustEmbedUnimplementedRpcServer()
 }
 
@@ -135,6 +147,9 @@ func (UnimplementedRpcServer) GetAllTx(context.Context, *GetAllTxReq) (*GetAllTx
 }
 func (UnimplementedRpcServer) GetTx(context.Context, *GetTxReq) (*GetTxResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTx not implemented")
+}
+func (UnimplementedRpcServer) NewAccount(context.Context, *NewAccountReq) (*NewAccountResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NewAccount not implemented")
 }
 func (UnimplementedRpcServer) mustEmbedUnimplementedRpcServer() {}
 
@@ -257,6 +272,24 @@ func _Rpc_GetTx_Handler(srv interface{}, ctx context.Context, dec func(interface
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Rpc_NewAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NewAccountReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RpcServer).NewAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Rpc_NewAccount_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RpcServer).NewAccount(ctx, req.(*NewAccountReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Rpc_ServiceDesc is the grpc.ServiceDesc for Rpc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -287,6 +320,10 @@ var Rpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetTx",
 			Handler:    _Rpc_GetTx_Handler,
+		},
+		{
+			MethodName: "NewAccount",
+			Handler:    _Rpc_NewAccount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

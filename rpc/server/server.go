@@ -6,7 +6,11 @@ import (
 	"github.com/cockroachdb/pebble"
 	"github.com/lankaiyun/kaiyunchain/common"
 	"github.com/lankaiyun/kaiyunchain/core"
+	"github.com/lankaiyun/kaiyunchain/db"
+	"github.com/lankaiyun/kaiyunchain/mpt"
 	"github.com/lankaiyun/kaiyunchain/rpc/pb"
+	"github.com/lankaiyun/kaiyunchain/wallet"
+	"log"
 	"math/big"
 	"strconv"
 )
@@ -116,4 +120,20 @@ func (s *Server) GetTx(ctx context.Context, req *pb.GetTxReq) (*pb.GetTxResp, er
 		Time:        common.TimestampToTime(tx.Time),
 		BelongBlock: tx.BelongBlock.String(),
 	}, nil
+}
+
+func (s *Server) NewAccount(ctx context.Context, req *pb.NewAccountReq) (*pb.NewAccountResp, error) {
+	w := wallet.NewWallet()
+	path := db.KeystoreDataPath + "/" + w.Address.Hex()
+	w.StoreKey(path, req.GetPassword())
+
+	mptBytes := db.Get(common.Latest, s.MptDbObj)
+	trie := mpt.Deserialize(mptBytes)
+	state := core.NewState()
+	err := trie.Put(w.Address.Bytes(), core.Serialize(state))
+	if err != nil {
+		log.Panic("Failed to Put:", err)
+	}
+	db.Set(common.Latest, mpt.Serialize(trie.Root), s.MptDbObj)
+	return &pb.NewAccountResp{Account: w.Address.Hex()}, nil
 }
