@@ -31,13 +31,10 @@ func IsContainsDigitAndLetter(s string) bool {
 }
 
 func IsPositiveInteger(s string) bool {
-	// 尝试将字符串转换为整数
 	num, err := strconv.Atoi(s)
 	if err != nil {
-		// 转换失败，说明不是整数
 		return false
 	}
-	// 判断是否为正整数
 	return num > 0
 }
 

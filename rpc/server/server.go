@@ -12,7 +12,9 @@ import (
 	"github.com/lankaiyun/kaiyunchain/wallet"
 	"log"
 	"math/big"
+	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 type Server struct {
@@ -136,4 +138,27 @@ func (s *Server) NewAccount(ctx context.Context, req *pb.NewAccountReq) (*pb.New
 	}
 	db.Set(common.Latest, mpt.Serialize(trie.Root), s.MptDbObj)
 	return &pb.NewAccountResp{Account: w.Address.Hex()}, nil
+}
+
+func IsAccountExist(address string) bool {
+	files, _ := filepath.Glob(db.KeystoreDataPath + "/*")
+	for i := 0; i < len(files); i++ {
+		if strings.Compare(files[i][25:], address) == 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Server) GetBalance(ctx context.Context, req *pb.GetBalanceReq) (*pb.GetBalanceResp, error) {
+	addr := req.GetAddress()
+	if !IsAccountExist(addr) {
+		return nil, errors.New("账号不存在")
+	}
+
+	mptBytes := db.Get(common.Latest, s.MptDbObj)
+	trie := mpt.Deserialize(mptBytes)
+	stateBytes, _ := trie.Get(common.Hex2Bytes(addr[2:]))
+	state := core.DeserializeState(stateBytes)
+	return &pb.GetBalanceResp{Balance: state.Balance.String()}, nil
 }
