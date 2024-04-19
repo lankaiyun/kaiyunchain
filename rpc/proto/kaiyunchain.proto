@@ -14,6 +14,7 @@ service Rpc {
   rpc NewAccount(NewAccountReq) returns (NewAccountResp) {}
   rpc GetBalance(GetBalanceReq) returns (GetBalanceResp) {}
   rpc NewTx(NewTxReq) returns (NewTxResp) {}
+  rpc TxPool(TxPoolReq) returns (TxPoolResp) {}
 }
 
 // ------- GetLatestBlockHeight --------
@@ -123,7 +124,7 @@ message GetBalanceResp {
 }
 // -------------------------------------
 
-// ------------ GetBalance -------------
+// ------------ NewTx -------------
 message NewTxReq {
   string from = 1;
   string to = 2;
@@ -133,5 +134,20 @@ message NewTxReq {
 
 message NewTxResp {
   string result = 1;
+}
+// -------------------------------------
+
+// ------------ TxPool-------------
+message TxPoolReq {}
+
+message TxPoolResp {
+  message Tx {
+    string txHash = 1;
+    string from = 2;
+    string to = 3;
+    string value = 4;
+    string time = 5;
+  }
+  repeated Tx txs = 1;
 }
 // -------------------------------------

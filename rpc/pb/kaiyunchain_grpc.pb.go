@@ -28,6 +28,7 @@ const (
 	Rpc_NewAccount_FullMethodName           = "/Rpc/NewAccount"
 	Rpc_GetBalance_FullMethodName           = "/Rpc/GetBalance"
 	Rpc_NewTx_FullMethodName                = "/Rpc/NewTx"
+	Rpc_TxPool_FullMethodName               = "/Rpc/TxPool"
 )
 
 // RpcClient is the client API for Rpc service.
@@ -43,6 +44,7 @@ type RpcClient interface {
 	NewAccount(ctx context.Context, in *NewAccountReq, opts ...grpc.CallOption) (*NewAccountResp, error)
 	GetBalance(ctx context.Context, in *GetBalanceReq, opts ...grpc.CallOption) (*GetBalanceResp, error)
 	NewTx(ctx context.Context, in *NewTxReq, opts ...grpc.CallOption) (*NewTxResp, error)
+	TxPool(ctx context.Context, in *TxPoolReq, opts ...grpc.CallOption) (*TxPoolResp, error)
 }
 
 type rpcClient struct {
@@ -134,6 +136,15 @@ func (c *rpcClient) NewTx(ctx context.Context, in *NewTxReq, opts ...grpc.CallOp
 	return out, nil
 }
 
+func (c *rpcClient) TxPool(ctx context.Context, in *TxPoolReq, opts ...grpc.CallOption) (*TxPoolResp, error) {
+	out := new(TxPoolResp)
+	err := c.cc.Invoke(ctx, Rpc_TxPool_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RpcServer is the server API for Rpc service.
 // All implementations must embed UnimplementedRpcServer
 // for forward compatibility
@@ -147,6 +158,7 @@ type RpcServer interface {
 	NewAccount(context.Context, *NewAccountReq) (*NewAccountResp, error)
 	GetBalance(context.Context, *GetBalanceReq) (*GetBalanceResp, error)
 	NewTx(context.Context, *NewTxReq) (*NewTxResp, error)
+	TxPool(context.Context, *TxPoolReq) (*TxPoolResp, error)
 	mustEmbedUnimplementedRpcServer()
 }
 
@@ -180,6 +192,9 @@ func (UnimplementedRpcServer) GetBalance(context.Context, *GetBalanceReq) (*GetB
 }
 func (UnimplementedRpcServer) NewTx(context.Context, *NewTxReq) (*NewTxResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NewTx not implemented")
+}
+func (UnimplementedRpcServer) TxPool(context.Context, *TxPoolReq) (*TxPoolResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TxPool not implemented")
 }
 func (UnimplementedRpcServer) mustEmbedUnimplementedRpcServer() {}
 
@@ -356,6 +371,24 @@ func _Rpc_NewTx_Handler(srv interface{}, ctx context.Context, dec func(interface
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Rpc_TxPool_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TxPoolReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RpcServer).TxPool(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Rpc_TxPool_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RpcServer).TxPool(ctx, req.(*TxPoolReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Rpc_ServiceDesc is the grpc.ServiceDesc for Rpc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -398,6 +431,10 @@ var Rpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "NewTx",
 			Handler:    _Rpc_NewTx_Handler,
+		},
+		{
+			MethodName: "TxPool",
+			Handler:    _Rpc_TxPool_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

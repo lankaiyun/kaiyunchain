@@ -211,3 +211,23 @@ func (s *Server) NewTx(ctx context.Context, req *pb.NewTxReq) (*pb.NewTxResp, er
 	core.NewTx(common.BytesToAddress(accByte), common.BytesToAddress(toByte), val, height, time.Now().Unix(), ecdsa.EncodePubKey(w.PubKey), loc, w, s.TxDbObj)
 	return &pb.NewTxResp{Result: "交易成功！"}, nil
 }
+
+func (s *Server) TxPool(ctx context.Context, req *pb.TxPoolReq) (*pb.TxPoolResp, error) {
+	_, loc := core.TxIsFull(s.TxDbObj)
+	if loc[0] == 0 {
+		return nil, nil
+	}
+	var txs []*pb.TxPoolResp_Tx
+	for i := 0; i < int(loc[0]); i++ {
+		txBytes := db.Get([]byte{byte(i)}, s.TxDbObj)
+		tx := core.DeserializeTx(txBytes)
+		txs = append(txs, &pb.TxPoolResp_Tx{
+			TxHash: tx.TxHash.Hex(),
+			From:   tx.From.Hex(),
+			To:     tx.To.Hex(),
+			Value:  tx.Value.String(),
+			Time:   common.TimestampToTime(tx.Time),
+		})
+	}
+	return &pb.TxPoolResp{Txs: txs}, nil
+}
