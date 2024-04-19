@@ -6,6 +6,7 @@ import (
 	"github.com/cockroachdb/pebble"
 	"github.com/lankaiyun/kaiyunchain/common"
 	"github.com/lankaiyun/kaiyunchain/core"
+	"github.com/lankaiyun/kaiyunchain/crypto/ecdsa"
 	"github.com/lankaiyun/kaiyunchain/db"
 	"github.com/lankaiyun/kaiyunchain/mpt"
 	"github.com/lankaiyun/kaiyunchain/rpc/pb"
@@ -15,6 +16,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Server struct {
@@ -161,4 +163,51 @@ func (s *Server) GetBalance(ctx context.Context, req *pb.GetBalanceReq) (*pb.Get
 	stateBytes, _ := trie.Get(common.Hex2Bytes(addr[2:]))
 	state := core.DeserializeState(stateBytes)
 	return &pb.GetBalanceResp{Balance: state.Balance.String()}, nil
+}
+
+func (s *Server) NewTx(ctx context.Context, req *pb.NewTxReq) (*pb.NewTxResp, error) {
+	from := req.From
+	to := req.To
+	amount := req.Amount
+	pass := req.Pass
+	if !IsAccountExist(from) {
+		return &pb.NewTxResp{Result: "账号不存在！"}, nil
+	}
+	if !IsAccountExist(to) {
+		return &pb.NewTxResp{Result: "账号不存在！"}, nil
+	}
+	p := db.KeystoreDataPath + "/" + from
+	w := wallet.LoadWallet(p, pass, from)
+	if w == nil {
+		return &pb.NewTxResp{Result: "密码错误！"}, nil
+	}
+	ok, loc := core.TxIsFull(s.TxDbObj)
+	if ok {
+		return &pb.NewTxResp{Result: "交易池已满！"}, nil
+	}
+	mptBytes := db.Get(common.Latest, s.MptDbObj)
+	trie := mpt.Deserialize(mptBytes)
+	accByte := common.Hex2Bytes(from[2:])
+	stateByte, _ := trie.Get(accByte)
+	state := core.DeserializeState(stateByte)
+	balance := state.Balance
+	val, _ := new(big.Int).SetString(amount, 10)
+	if balance.Cmp(val) == -1 {
+		return &pb.NewTxResp{Result: "余额不足！"}, nil
+	}
+	state.Balance = balance.Sub(balance, val)
+	state.Nonce += 1
+	trie.Update(accByte, core.Serialize(state))
+	toByte := common.Hex2Bytes(from[2:])
+	state2Bytes, _ := trie.Get(toByte)
+	state2 := core.DeserializeState(state2Bytes)
+	state2.Balance = state2.Balance.Add(state2.Balance, val)
+	trie.Update(toByte, core.Serialize(state2))
+	db.Set(common.Latest, mpt.Serialize(trie.Root), s.MptDbObj)
+	// Get belong block
+	lastBlock := core.GetLastBlock(s.ChainDbObj)
+	height := new(big.Int).Add(lastBlock.Header.Height, common.Big1)
+	// Build tx
+	core.NewTx(common.BytesToAddress(accByte), common.BytesToAddress(toByte), val, height, time.Now().Unix(), ecdsa.EncodePubKey(w.PubKey), loc, w, s.TxDbObj)
+	return &pb.NewTxResp{Result: "交易成功！"}, nil
 }

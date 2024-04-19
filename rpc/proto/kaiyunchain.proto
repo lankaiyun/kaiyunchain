@@ -13,6 +13,7 @@ service Rpc {
 
   rpc NewAccount(NewAccountReq) returns (NewAccountResp) {}
   rpc GetBalance(GetBalanceReq) returns (GetBalanceResp) {}
+  rpc NewTx(NewTxReq) returns (NewTxResp) {}
 }
 
 // ------- GetLatestBlockHeight --------
@@ -119,5 +120,18 @@ message GetBalanceReq {
 
 message GetBalanceResp {
   string balance = 1;
+}
+// -------------------------------------
+
+// ------------ GetBalance -------------
+message NewTxReq {
+  string from = 1;
+  string to = 2;
+  string amount = 3;
+  string pass = 4;
+}
+
+message NewTxResp {
+  string result = 1;
 }
 // -------------------------------------
