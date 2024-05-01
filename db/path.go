@@ -6,4 +6,5 @@ var (
 	KeystoreDataPath = "./KaiYunChainData/keystore"
 	LogDataPath      = "./KaiYunChainData/log"
 	TxDataPath       = "./KaiYunChainData/tx"
+	ContractDataPath = "./KaiYunChainData/contract"
 )

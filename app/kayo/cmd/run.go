@@ -23,9 +23,10 @@ var runCmd = &cobra.Command{
 		listen, _ := net.Listen("tcp", ":"+rpcPort)
 		grpcServer := grpc.NewServer()
 		pb.RegisterRpcServer(grpcServer, &server.Server{
-			MptDbObj:   db.GetDbObj(db.MptDataPath),
-			ChainDbObj: db.GetDbObj(db.ChainDataPath),
-			TxDbObj:    db.GetDbObj(db.TxDataPath),
+			MptDbObj:      db.GetDbObj(db.MptDataPath),
+			ChainDbObj:    db.GetDbObj(db.ChainDataPath),
+			TxDbObj:       db.GetDbObj(db.TxDataPath),
+			ContractDbObj: db.GetDbObj(db.ContractDataPath),
 		})
 		err := grpcServer.Serve(listen)
 		if err != nil {

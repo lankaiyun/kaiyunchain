@@ -15,6 +15,12 @@ service Rpc {
   rpc GetBalance(GetBalanceReq) returns (GetBalanceResp) {}
   rpc NewTx(NewTxReq) returns (NewTxResp) {}
   rpc TxPool(TxPoolReq) returns (TxPoolResp) {}
+
+  rpc Deploy(DeployReq) returns (DeployResp) {}
+  rpc GetContract(GetContractReq) returns (GetContractResp) {}
+  rpc Call(CallReq) returns (CallResp) {}
+  rpc Set(SetReq) returns (SetResp) {}
+  rpc Get(GetReq) returns (GetResp) {}
 }
 
 // ------- GetLatestBlockHeight --------
@@ -135,7 +141,7 @@ message NewTxReq {
 message NewTxResp {
   string result = 1;
 }
-// -------------------------------------
+// -----------------------------------
 
 // ------------ TxPool-------------
 message TxPoolReq {}
@@ -149,5 +155,68 @@ message TxPoolResp {
     string time = 5;
   }
   repeated Tx txs = 1;
+}
+// -----------------------------------
+
+// -------------- Deploy---------------
+message DeployReq {
+  bytes contract = 1;
+  string account = 2;
+  string password = 3;
+}
+
+message DeployResp {
+  string result = 1;
+  string contractAddress = 2;
+}
+// -------------------------------------
+
+// ------------ GetContract -------------
+message GetContractReq {
+  string contractAddress = 1;
+}
+
+message GetContractResp {
+  bytes contract = 1;
+  string result = 2;
+}
+// -------------------------------------
+
+// -------------- Call -----------------
+message CallReq {
+  bytes contract = 1;
+  string account = 2;
+  string password = 3;
+  string contractAddress = 4;
+}
+
+message CallResp {
+  string result = 1;
+}
+// -------------------------------------
+
+// -------------- Set -----------------
+message SetReq {
+  bytes value = 1;
+  bytes key = 2;
+  string account = 3;
+  string password = 4;
+  string contractAddress = 5;
+}
+
+message SetResp {
+  string result = 1;
+}
+// -------------------------------------
+
+// -------------- Get -----------------
+message GetReq {
+  bytes key = 1;
+  string contractAddress = 5;
+}
+
+message GetResp {
+  string result = 1;
+  bytes value = 2;
 }
 // -------------------------------------

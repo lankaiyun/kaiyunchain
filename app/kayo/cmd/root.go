@@ -12,6 +12,7 @@ func init() {
 	rootCmd.AddCommand(accountCmd)
 	rootCmd.AddCommand(consoleCmd)
 	rootCmd.AddCommand(runCmd)
+	rootCmd.AddCommand(deployCmd)
 }
 
 var rootCmd = &cobra.Command{

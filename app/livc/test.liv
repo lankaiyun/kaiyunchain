@@ -1,0 +1,11 @@
+contract Storage {
+    int num;
+
+    func store(int num) {
+        num = num;
+    }
+
+    func retrieve() int {
+        return num;
+    }
+}

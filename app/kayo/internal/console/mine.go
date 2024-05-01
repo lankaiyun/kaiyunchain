@@ -5,6 +5,7 @@ import (
 	"github.com/cockroachdb/pebble"
 	"github.com/fatih/color"
 	"github.com/lankaiyun/kaiyunchain/common"
+	"github.com/lankaiyun/kaiyunchain/config"
 	"github.com/lankaiyun/kaiyunchain/core"
 	"github.com/lankaiyun/kaiyunchain/crypto/ecdsa"
 	"github.com/lankaiyun/kaiyunchain/db"
@@ -36,7 +37,7 @@ func Mine(account string, txDbObj, chainDbObj, mptDbObj *pebble.DB) {
 	trie := mpt.Deserialize(mptBytes)
 	stateBytes, _ := trie.Get(accBytes)
 	state := core.DeserializeState(stateBytes)
-	reward, _ := new(big.Int).SetString("100", 10)
+	reward, _ := new(big.Int).SetString(config.BlockRewardStr, 10)
 	state.Balance = state.Balance.Add(state.Balance, reward)
 	trie.Update(accBytes, core.Serialize(state))
 	db.Set(common.Latest, mpt.Serialize(trie.Root), mptDbObj)

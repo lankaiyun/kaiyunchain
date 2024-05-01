@@ -29,6 +29,11 @@ const (
 	Rpc_GetBalance_FullMethodName           = "/Rpc/GetBalance"
 	Rpc_NewTx_FullMethodName                = "/Rpc/NewTx"
 	Rpc_TxPool_FullMethodName               = "/Rpc/TxPool"
+	Rpc_Deploy_FullMethodName               = "/Rpc/Deploy"
+	Rpc_GetContract_FullMethodName          = "/Rpc/GetContract"
+	Rpc_Call_FullMethodName                 = "/Rpc/Call"
+	Rpc_Set_FullMethodName                  = "/Rpc/Set"
+	Rpc_Get_FullMethodName                  = "/Rpc/Get"
 )
 
 // RpcClient is the client API for Rpc service.
@@ -45,6 +50,11 @@ type RpcClient interface {
 	GetBalance(ctx context.Context, in *GetBalanceReq, opts ...grpc.CallOption) (*GetBalanceResp, error)
 	NewTx(ctx context.Context, in *NewTxReq, opts ...grpc.CallOption) (*NewTxResp, error)
 	TxPool(ctx context.Context, in *TxPoolReq, opts ...grpc.CallOption) (*TxPoolResp, error)
+	Deploy(ctx context.Context, in *DeployReq, opts ...grpc.CallOption) (*DeployResp, error)
+	GetContract(ctx context.Context, in *GetContractReq, opts ...grpc.CallOption) (*GetContractResp, error)
+	Call(ctx context.Context, in *CallReq, opts ...grpc.CallOption) (*CallResp, error)
+	Set(ctx context.Context, in *SetReq, opts ...grpc.CallOption) (*SetResp, error)
+	Get(ctx context.Context, in *GetReq, opts ...grpc.CallOption) (*GetResp, error)
 }
 
 type rpcClient struct {
@@ -145,6 +155,51 @@ func (c *rpcClient) TxPool(ctx context.Context, in *TxPoolReq, opts ...grpc.Call
 	return out, nil
 }
 
+func (c *rpcClient) Deploy(ctx context.Context, in *DeployReq, opts ...grpc.CallOption) (*DeployResp, error) {
+	out := new(DeployResp)
+	err := c.cc.Invoke(ctx, Rpc_Deploy_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *rpcClient) GetContract(ctx context.Context, in *GetContractReq, opts ...grpc.CallOption) (*GetContractResp, error) {
+	out := new(GetContractResp)
+	err := c.cc.Invoke(ctx, Rpc_GetContract_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *rpcClient) Call(ctx context.Context, in *CallReq, opts ...grpc.CallOption) (*CallResp, error) {
+	out := new(CallResp)
+	err := c.cc.Invoke(ctx, Rpc_Call_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *rpcClient) Set(ctx context.Context, in *SetReq, opts ...grpc.CallOption) (*SetResp, error) {
+	out := new(SetResp)
+	err := c.cc.Invoke(ctx, Rpc_Set_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *rpcClient) Get(ctx context.Context, in *GetReq, opts ...grpc.CallOption) (*GetResp, error) {
+	out := new(GetResp)
+	err := c.cc.Invoke(ctx, Rpc_Get_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RpcServer is the server API for Rpc service.
 // All implementations must embed UnimplementedRpcServer
 // for forward compatibility
@@ -159,6 +214,11 @@ type RpcServer interface {
 	GetBalance(context.Context, *GetBalanceReq) (*GetBalanceResp, error)
 	NewTx(context.Context, *NewTxReq) (*NewTxResp, error)
 	TxPool(context.Context, *TxPoolReq) (*TxPoolResp, error)
+	Deploy(context.Context, *DeployReq) (*DeployResp, error)
+	GetContract(context.Context, *GetContractReq) (*GetContractResp, error)
+	Call(context.Context, *CallReq) (*CallResp, error)
+	Set(context.Context, *SetReq) (*SetResp, error)
+	Get(context.Context, *GetReq) (*GetResp, error)
 	mustEmbedUnimplementedRpcServer()
 }
 
@@ -195,6 +255,21 @@ func (UnimplementedRpcServer) NewTx(context.Context, *NewTxReq) (*NewTxResp, err
 }
 func (UnimplementedRpcServer) TxPool(context.Context, *TxPoolReq) (*TxPoolResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TxPool not implemented")
+}
+func (UnimplementedRpcServer) Deploy(context.Context, *DeployReq) (*DeployResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Deploy not implemented")
+}
+func (UnimplementedRpcServer) GetContract(context.Context, *GetContractReq) (*GetContractResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetContract not implemented")
+}
+func (UnimplementedRpcServer) Call(context.Context, *CallReq) (*CallResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Call not implemented")
+}
+func (UnimplementedRpcServer) Set(context.Context, *SetReq) (*SetResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Set not implemented")
+}
+func (UnimplementedRpcServer) Get(context.Context, *GetReq) (*GetResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
 func (UnimplementedRpcServer) mustEmbedUnimplementedRpcServer() {}
 
@@ -389,6 +464,96 @@ func _Rpc_TxPool_Handler(srv interface{}, ctx context.Context, dec func(interfac
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Rpc_Deploy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeployReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RpcServer).Deploy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Rpc_Deploy_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RpcServer).Deploy(ctx, req.(*DeployReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Rpc_GetContract_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetContractReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RpcServer).GetContract(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Rpc_GetContract_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RpcServer).GetContract(ctx, req.(*GetContractReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Rpc_Call_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CallReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RpcServer).Call(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Rpc_Call_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RpcServer).Call(ctx, req.(*CallReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Rpc_Set_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RpcServer).Set(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Rpc_Set_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RpcServer).Set(ctx, req.(*SetReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Rpc_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RpcServer).Get(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Rpc_Get_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RpcServer).Get(ctx, req.(*GetReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Rpc_ServiceDesc is the grpc.ServiceDesc for Rpc service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -435,6 +600,26 @@ var Rpc_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "TxPool",
 			Handler:    _Rpc_TxPool_Handler,
+		},
+		{
+			MethodName: "Deploy",
+			Handler:    _Rpc_Deploy_Handler,
+		},
+		{
+			MethodName: "GetContract",
+			Handler:    _Rpc_GetContract_Handler,
+		},
+		{
+			MethodName: "Call",
+			Handler:    _Rpc_Call_Handler,
+		},
+		{
+			MethodName: "Set",
+			Handler:    _Rpc_Set_Handler,
+		},
+		{
+			MethodName: "Get",
+			Handler:    _Rpc_Get_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

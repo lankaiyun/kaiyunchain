@@ -9,10 +9,9 @@ import (
 )
 
 type State struct {
-	Nonce    uint64      // The number of transactions completed by the wallet
-	Balance  *big.Int    // Current Account Balance
-	Storage  common.Hash // Contract Storage Trie Hash
-	CodeHash []byte      // Contract Code Hash
+	Nonce        uint64   // 交易次数
+	Balance      *big.Int // 余额
+	ContractCode []byte   // 合约结构体bytes
 }
 
 func NewState() *State {

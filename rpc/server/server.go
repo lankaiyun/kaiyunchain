@@ -5,8 +5,10 @@ import (
 	"errors"
 	"github.com/cockroachdb/pebble"
 	"github.com/lankaiyun/kaiyunchain/common"
+	"github.com/lankaiyun/kaiyunchain/config"
 	"github.com/lankaiyun/kaiyunchain/core"
 	"github.com/lankaiyun/kaiyunchain/crypto/ecdsa"
+	"github.com/lankaiyun/kaiyunchain/crypto/keccak256"
 	"github.com/lankaiyun/kaiyunchain/db"
 	"github.com/lankaiyun/kaiyunchain/mpt"
 	"github.com/lankaiyun/kaiyunchain/rpc/pb"
@@ -20,9 +22,10 @@ import (
 )
 
 type Server struct {
-	MptDbObj   *pebble.DB
-	ChainDbObj *pebble.DB
-	TxDbObj    *pebble.DB
+	MptDbObj      *pebble.DB
+	ChainDbObj    *pebble.DB
+	TxDbObj       *pebble.DB
+	ContractDbObj *pebble.DB
 	pb.UnimplementedRpcServer
 }
 
@@ -230,4 +233,159 @@ func (s *Server) TxPool(ctx context.Context, req *pb.TxPoolReq) (*pb.TxPoolResp,
 		})
 	}
 	return &pb.TxPoolResp{Txs: txs}, nil
+}
+
+func (s *Server) Deploy(ctx context.Context, req *pb.DeployReq) (*pb.DeployResp, error) {
+	account := req.Account
+	password := req.Password
+	contractBs := req.Contract
+
+	if !IsAccountExist(account) {
+		return &pb.DeployResp{Result: "账号不存在！"}, nil
+	}
+
+	p := db.KeystoreDataPath + "/" + account
+	w := wallet.LoadWallet(p, password, account)
+	if w == nil {
+		return &pb.DeployResp{Result: "密码错误！"}, nil
+	}
+
+	ok, loc := core.TxIsFull(s.TxDbObj)
+	if ok {
+		return &pb.DeployResp{Result: "The current txpool is full!"}, nil
+	}
+
+	mptBytes := db.Get(common.Latest, s.MptDbObj)
+	trie := mpt.Deserialize(mptBytes)
+
+	accBs := common.Hex2Bytes(account[2:])
+	accStateBs, _ := trie.Get(accBs)
+	accState := core.DeserializeState(accStateBs)
+
+	balance := accState.Balance
+	valueBig := big.NewInt(int64(config.DeployCostInt))
+	if balance.Cmp(valueBig) == -1 {
+		return &pb.DeployResp{Result: "Your balance is insufficient!"}, nil
+	}
+
+	nounceStr := strconv.Itoa(int(accState.Nonce))
+	state := core.NewState()
+	state.ContractCode = contractBs
+	contractAddress := keccak256.Keccak256(contractBs, []byte(account), []byte(nounceStr))[:20]
+	t := common.Address{}
+	t.SetBytes(contractAddress)
+	accState.Balance = balance.Sub(balance, valueBig)
+	accState.Nonce += 1
+
+	lastBlock := core.GetLastBlock(s.ChainDbObj)
+	height := new(big.Int).Add(lastBlock.Header.Height, common.Big1)
+
+	core.NewNewContractTx(common.BytesToAddress(accBs), common.BytesToAddress(t.Bytes()), valueBig, height, time.Now().Unix(), ecdsa.EncodePubKey(w.PubKey), loc, w, s.TxDbObj)
+	trie.Put(t.Bytes(), core.Serialize(state))
+	trie.Put(accBs, core.Serialize(accState))
+	db.Set(common.Latest, mpt.Serialize(trie.Root), s.MptDbObj)
+	return &pb.DeployResp{Result: "1", ContractAddress: t.Hex()}, nil
+}
+
+func (s *Server) GetContract(ctx context.Context, req *pb.GetContractReq) (*pb.GetContractResp, error) {
+	addr := req.ContractAddress
+	addrBs := common.Hex2Bytes(addr[2:])
+
+	mptBytes := db.Get(common.Latest, s.MptDbObj)
+	trie := mpt.Deserialize(mptBytes)
+
+	v, err := trie.Get(addrBs)
+	if !err {
+		return &pb.GetContractResp{Result: "合约地址不存在！"}, nil
+	}
+	state := core.DeserializeState(v)
+	return &pb.GetContractResp{Result: "1", Contract: state.ContractCode}, nil
+}
+
+func (s *Server) Call(ctx context.Context, req *pb.CallReq) (*pb.CallResp, error) {
+	account := req.Account
+	password := req.Password
+	contractBs := req.Contract
+	contractAddr := req.ContractAddress
+
+	if !IsAccountExist(account) {
+		return &pb.CallResp{Result: "账号不存在！"}, nil
+	}
+
+	p := db.KeystoreDataPath + "/" + account
+	w := wallet.LoadWallet(p, password, account)
+	if w == nil {
+		return &pb.CallResp{Result: "密码错误！"}, nil
+	}
+
+	mptBytes := db.Get(common.Latest, s.MptDbObj)
+	trie := mpt.Deserialize(mptBytes)
+
+	accBs := common.Hex2Bytes(account[2:])
+	accStateBs, _ := trie.Get(accBs)
+	accState := core.DeserializeState(accStateBs)
+
+	contrAddrBs := common.Hex2Bytes(contractAddr[2:])
+	contrAddrStateBs, _ := trie.Get(contrAddrBs)
+	contrAddrState := core.DeserializeState(contrAddrStateBs)
+
+	contrAddrState.ContractCode = contractBs
+
+	valueBig := big.NewInt(int64(config.CallCostInt))
+	balance := accState.Balance
+	if balance.Cmp(valueBig) == -1 {
+		return &pb.CallResp{Result: "Your balance is insufficient!"}, nil
+	}
+
+	accState.Balance = balance.Sub(balance, valueBig)
+
+	trie.Put(contractBs, core.Serialize(contrAddrState))
+	trie.Put(accBs, core.Serialize(accState))
+	db.Set(common.Latest, mpt.Serialize(trie.Root), s.MptDbObj)
+	return &pb.CallResp{Result: "1"}, nil
+}
+
+func (s *Server) Set(ctx context.Context, req *pb.SetReq) (*pb.SetResp, error) {
+	k := req.Key
+	v := req.Value
+	account := req.Account
+	password := req.Password
+	contractAddr := req.ContractAddress
+	kk := append(k, []byte(contractAddr)...)
+	if !IsAccountExist(account) {
+		return &pb.SetResp{Result: "账号不存在！"}, nil
+	}
+
+	p := db.KeystoreDataPath + "/" + account
+	w := wallet.LoadWallet(p, password, account)
+	if w == nil {
+		return &pb.SetResp{Result: "密码错误！"}, nil
+	}
+	db.Set(kk, v, s.ContractDbObj)
+
+	mptBytes := db.Get(common.Latest, s.MptDbObj)
+	trie := mpt.Deserialize(mptBytes)
+
+	accBs := common.Hex2Bytes(account[2:])
+	accStateBs, _ := trie.Get(accBs)
+	accState := core.DeserializeState(accStateBs)
+
+	valueBig := big.NewInt(int64(config.CallCostInt))
+	balance := accState.Balance
+	if balance.Cmp(valueBig) == -1 {
+		return &pb.SetResp{Result: "Your balance is insufficient!"}, nil
+	}
+
+	accState.Balance = balance.Sub(balance, valueBig)
+	trie.Put(accBs, core.Serialize(accState))
+	db.Set(common.Latest, mpt.Serialize(trie.Root), s.MptDbObj)
+
+	return &pb.SetResp{Result: "1"}, nil
+}
+
+func (s *Server) Get(ctx context.Context, req *pb.GetReq) (*pb.GetResp, error) {
+	k := req.Key
+	contractAddr := req.ContractAddress
+	kk := append(k, []byte(contractAddr)...)
+	return &pb.GetResp{Result: "1", Value: db.Get(kk, s.ContractDbObj)}, nil
 }

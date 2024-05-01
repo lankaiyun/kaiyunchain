@@ -23,7 +23,11 @@ type Tx struct {
 	Time        int64
 	PubKey      []byte
 	Signature   []byte
-	State       int
+	Type        int
+	// 0 普通交易
+	// 1 创建合约交易
+	// 2 调用合约交易
+	State int
 	// 0 represent not yet included in the blockchain
 	// 1 represent already included in the blockchain
 }
@@ -36,6 +40,38 @@ func NewTx(from, to common.Address, value, belongBlock *big.Int, time int64, pub
 		Time:        time,
 		PubKey:      pubKey,
 		BelongBlock: belongBlock,
+	}
+	tx.TxHash.SetBytes(keccak256.Keccak256(Serialize(tx)))
+	tx.Signature = w.Sign(tx.TxHash.Bytes())
+	db.Set(loc, Serialize(tx), txDbObj)
+	db.Set(tx.TxHash.Bytes(), Serialize(tx), txDbObj)
+}
+
+func NewNewContractTx(from, to common.Address, value, belongBlock *big.Int, time int64, pubKey, loc []byte, w *wallet.Wallet, txDbObj *pebble.DB) {
+	tx := &Tx{
+		From:        from,
+		To:          to,
+		Value:       value,
+		Time:        time,
+		PubKey:      pubKey,
+		BelongBlock: belongBlock,
+		Type:        1,
+	}
+	tx.TxHash.SetBytes(keccak256.Keccak256(Serialize(tx)))
+	tx.Signature = w.Sign(tx.TxHash.Bytes())
+	db.Set(loc, Serialize(tx), txDbObj)
+	db.Set(tx.TxHash.Bytes(), Serialize(tx), txDbObj)
+}
+
+func NewCallContractTx(from, to common.Address, value, belongBlock *big.Int, time int64, pubKey, loc []byte, w *wallet.Wallet, txDbObj *pebble.DB) {
+	tx := &Tx{
+		From:        from,
+		To:          to,
+		Value:       value,
+		Time:        time,
+		PubKey:      pubKey,
+		BelongBlock: belongBlock,
+		Type:        2,
 	}
 	tx.TxHash.SetBytes(keccak256.Keccak256(Serialize(tx)))
 	tx.Signature = w.Sign(tx.TxHash.Bytes())

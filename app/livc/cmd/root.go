@@ -7,6 +7,7 @@ import (
 )
 
 func init() {
+	rootCmd.AddCommand(lexerCmd)
 	rootCmd.AddCommand(versionCmd)
 }
 
